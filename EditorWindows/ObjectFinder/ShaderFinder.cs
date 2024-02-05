@@ -7,6 +7,12 @@ public class ShaderFinder : ObjectFinderCondition
     public Shader targetedShader;
     public override List<GameObject> Process(List<GameObject> objects)
     {
+        if(targetedShader == null)
+        {
+            Debug.LogError("[OBJECT FINDER] Shader condition is null");
+            return null;
+        }
+
         List<GameObject> renderers = new List<GameObject>();
         List<GameObject> skinnedRenderers = new List<GameObject>();
         List<GameObject> objShader = new List<GameObject>();

@@ -9,6 +9,12 @@ public class DistanceFinder : ObjectFinderCondition
     public float maxRange;
     public override List<GameObject> Process(List<GameObject> objects)
     {
+        if(sourceObject == null)
+        {
+            Debug.LogError("[OBJECT FINDER] Source Object is null");
+            return null;
+        }
+
         objects = exclude? objects.Where(obj => Vector3.Distance(sourceObject.position, obj.transform.position) < minRange && Vector3.Distance(sourceObject.position, obj.transform.position) > maxRange).ToList():
         objects.Where(obj => Vector3.Distance(sourceObject.position, obj.transform.position) > minRange && Vector3.Distance(sourceObject.position, obj.transform.position) < maxRange).ToList();
 

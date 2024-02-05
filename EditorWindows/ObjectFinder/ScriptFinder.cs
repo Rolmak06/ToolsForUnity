@@ -12,8 +12,8 @@ public class ScriptFinder : ObjectFinderCondition
 
         if(targetedType == null)
         {
-            Debug.Log("Type is null, select a type in the appropriate field on the editor window.");
-            return objects;
+            Debug.LogError("[OBJECT FINDER] Script condition is null");
+            return null;
         }
 
         foreach(GameObject obj in tempObj)

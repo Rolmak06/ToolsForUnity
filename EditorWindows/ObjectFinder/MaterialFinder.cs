@@ -7,6 +7,12 @@ public class MaterialFinder : ObjectFinderCondition
     public Material targetedMaterial;
     public override List<GameObject> Process(List<GameObject> objects)
     {
+        if(targetedMaterial == null)
+        {
+            Debug.LogError("[OBJECT FINDER] Material condition is null");
+            return null;
+        }
+
         List<GameObject> renderers = new List<GameObject>();
         List<GameObject> skinnedRenderers = new List<GameObject>();
         List<GameObject> objMaterial = new List<GameObject>();
