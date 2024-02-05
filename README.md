@@ -8,3 +8,5 @@ This Unity Tool can be used to bake physic driven animations into keyed animatio
 
 ### Custom Exporter
 This create a Custom Exporter Window for more practicle package creation inside Unity. I've struggled a lot with the embedded Package Exporter. This tool gives you the possibility to create or use export presets powered by Scriptable Objects.
+
+[Contribution guidelines for this project](docs/CONTRIBUTING.md)
