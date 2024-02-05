@@ -8,6 +8,7 @@ using UnityEngine.Events;
 
 public class AnimationBakerToolEditor : EditorWindow
 {
+#region Variables
     public GameObject objectToRecord;
     public bool recordChildrens = true;
     GameObjectRecorder m_Recorder;
@@ -39,8 +40,11 @@ public class AnimationBakerToolEditor : EditorWindow
 
 
 
-    #region UnityCallBacks
+#endregion Variables
 
+#region UnityCallBacks
+
+    //Just put your utility path here
     [MenuItem("Tools/Louis/Animation Baker Tool")]
     static void ShowWindow()
     {
@@ -61,11 +65,6 @@ public class AnimationBakerToolEditor : EditorWindow
         OnStartRecordProperty = so.FindProperty("OnStartRecord");
         OnStopRecordProperty = so.FindProperty("OnStopRecord");
     }
-
- 
-
-    #endregion
-
     
     private void OnGUI()
     {
@@ -155,6 +154,7 @@ public class AnimationBakerToolEditor : EditorWindow
 
         so.ApplyModifiedProperties();
     }
+    
     private void Update()
     {
         //Debug.Log("Recording = " + isRecording);
@@ -173,6 +173,8 @@ public class AnimationBakerToolEditor : EditorWindow
         }
 
     }
+
+#endregion Unity Callbacks
 
     private void HandlePhysicSimulation()
     {
