@@ -11,5 +11,6 @@ This create a Custom Exporter Window for more practicle package creation inside 
 
 ### [Object Finder](EditorWindows/ObjectFinder)
 This Editor Window is the perfect tool the find gameobjects using multiple filters. This allows complex search through your scenes and your project assets. Filters : tag, layer, name, material, shader, distance, script..
+Seems futile at first but when you're working on big, I mean, way big scenes, it can helps a lot !
 
 
