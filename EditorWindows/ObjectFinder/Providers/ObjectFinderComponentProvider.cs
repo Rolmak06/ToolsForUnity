@@ -17,7 +17,7 @@ public class ObjectFinderComponentProvider : ScriptableObject, ISearchWindowProv
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
         List<SearchTreeEntry> searchList = new List<SearchTreeEntry>();
-        SearchTreeGroupEntry group = new SearchTreeGroupEntry(new GUIContent("Components"), 0);
+        SearchTreeGroupEntry group = new SearchTreeGroupEntry(new GUIContent("Types"), 0);
         searchList.Add(group);
 
         Debug.Log("Keys count : " + scriptsList.Keys.Count);
@@ -26,13 +26,13 @@ public class ObjectFinderComponentProvider : ScriptableObject, ISearchWindowProv
 
         foreach(string key in scriptsList.Keys)
         {
-            Type type;
-            scriptsList.TryGetValue(key, out type);
+            Type Type;
+            scriptsList.TryGetValue(key, out Type);
             
             SearchTreeEntry entry = new SearchTreeEntry(new GUIContent(key))
             {
                 level = 1,
-                userData = type
+                userData = Type
             };
 
             searchList.Add(entry);

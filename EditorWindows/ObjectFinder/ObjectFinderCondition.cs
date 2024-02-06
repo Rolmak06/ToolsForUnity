@@ -15,7 +15,7 @@ public enum ObjectFinderConditionsEnum
 {
     Name,
     Tag,
-    Script,
+    Component,
     Shader,
     Layer,
     Material,

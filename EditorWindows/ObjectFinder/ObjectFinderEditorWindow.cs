@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using NUnit.Framework.Constraints;
-using Sirenix.Utilities;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.Rendering.BuiltIn;
@@ -14,11 +12,9 @@ public class ObjectFinderEditorWindow : EditorWindow
 {
     ObjectFinderConditionsEnum conditionEnum = ObjectFinderConditionsEnum.Name;
     public List<ObjectFinderCondition> conditions = new List<ObjectFinderCondition>();
-    private Dictionary<string, Type> scriptsList = new Dictionary<string, Type>();
+    
 
     bool onlyActiveGameObjects;
-
-
     int toolbarInt;
     string[] toolbarOptions = {"Current Scene", "All Opened Scenes", "Project", "All"};
 
@@ -28,12 +24,11 @@ public class ObjectFinderEditorWindow : EditorWindow
     public List<GameObject> results = new List<GameObject>();
     SerializedProperty resultsProperty;
     SerializedObject so;
-    readonly ShaderInfo[] shaderInfos = ShaderUtil.GetAllShaderInfo();
+
+    private Dictionary<string, Type> scriptsList = new Dictionary<string, Type>();
 
 
-
-
-    [MenuItem("Tools/Louis/ObjectFinderPlus")]
+    [MenuItem("Tools/Object Finder")]
     static void ShowWindow()
     {
         ObjectFinderEditorWindow window = (ObjectFinderEditorWindow)EditorWindow.GetWindow(typeof(ObjectFinderEditorWindow));
@@ -95,6 +90,8 @@ public class ObjectFinderEditorWindow : EditorWindow
         }
     }
 
+
+    /// Buttons GUI
     private void DrawButtons()
     {
         EditorGUILayout.BeginHorizontal();
@@ -110,6 +107,8 @@ public class ObjectFinderEditorWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
     }
 
+
+    /// Base Search Paramaters GUI 
     private void DrawConditionsManagement()
     {
         toolbarInt = GUILayout.Toolbar(toolbarInt, toolbarOptions);
@@ -130,6 +129,8 @@ public class ObjectFinderEditorWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
     }
 
+
+    /// User created filters GUI
     private void DrawFilters()
     {
         try
@@ -151,9 +152,9 @@ public class ObjectFinderEditorWindow : EditorWindow
                     DrawLayerFilter(conditions[i] as LayerFinder);
                 }
 
-                if(conditions[i] is ScriptFinder)
+                if(conditions[i] is ComponentFinder)
                 {
-                    DrawScriptFilter(conditions[i] as ScriptFinder);
+                    DrawComponentFilter(conditions[i] as ComponentFinder);
                 }
 
                 if(conditions[i] is ShaderFinder)
@@ -180,7 +181,8 @@ public class ObjectFinderEditorWindow : EditorWindow
         
     }
     
-    void DrawNameFilter(NameFinder condition)
+    #region Filters  Methods
+    private void DrawNameFilter(NameFinder condition)
     {
         GUILayout.BeginVertical("Name Filter", "window");
         DrawRemoveButton(condition);
@@ -201,7 +203,7 @@ public class ObjectFinderEditorWindow : EditorWindow
         GUILayout.EndVertical();
     }
 
-    void DrawTagFilter(TagFinder condition)
+    private void DrawTagFilter(TagFinder condition)
     {
         GUILayout.BeginVertical("Tag Filter", "window");
         DrawRemoveButton(condition);
@@ -213,7 +215,7 @@ public class ObjectFinderEditorWindow : EditorWindow
         GUILayout.EndVertical();
     }
 
-    void DrawLayerFilter(LayerFinder condition)
+    private void DrawLayerFilter(LayerFinder condition)
     {
         GUILayout.BeginVertical("Layer Filter", "window");
         DrawRemoveButton(condition);
@@ -225,17 +227,15 @@ public class ObjectFinderEditorWindow : EditorWindow
         GUILayout.EndVertical();
     }
 
-    void DrawScriptFilter(ScriptFinder condition)
+    private void DrawComponentFilter(ComponentFinder condition)
     {
-        GUILayout.BeginVertical("Script Filter", "window");
+        GUILayout.BeginVertical("Component Filter", "window");
 
         DrawRemoveButton(condition);
 
-        //condition.targetedType = (Component)EditorGUILayout.ObjectField(condition.targetedType, typeof(Component), true);
-
         GUILayout.BeginHorizontal();
-            GUILayout.Label("Script :", GUILayout.MaxWidth(100));
-            if(GUILayout.Button(condition.targetedType == null? "Selected Type" : condition.targetedType.GetType().Name, EditorStyles.popup, GUILayout.MinWidth(200)))
+            GUILayout.Label("Component :", GUILayout.MaxWidth(100));
+            if(GUILayout.Button(condition.targetedType == null? "Selected Component" : condition.targetedType.Name, EditorStyles.popup, GUILayout.MinWidth(200)))
             {
                 SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)), new ObjectFinderComponentProvider(scriptsList, (x) => condition.targetedType = x));
             }
@@ -246,71 +246,75 @@ public class ObjectFinderEditorWindow : EditorWindow
         GUILayout.EndVertical();
     }
 
-    void DrawShaderFilter(ShaderFinder condition)
+    private void DrawShaderFilter(ShaderFinder condition)
     {
         GUILayout.BeginVertical("Shader Filter", "window");
 
-        DrawRemoveButton(condition);
+            DrawRemoveButton(condition);
 
-        condition.targetedShader = (Shader)EditorGUILayout.ObjectField(condition.targetedShader, typeof(Shader), true);
+            condition.targetedShader = (Shader)EditorGUILayout.ObjectField(condition.targetedShader, typeof(Shader), true);
 
-        DrawExcludeToggle(condition);
+            DrawExcludeToggle(condition);
 
         GUILayout.EndVertical();
     }
 
-    void DrawMaterialFilter(MaterialFinder condition)
+    private void DrawMaterialFilter(MaterialFinder condition)
     {
         GUILayout.BeginVertical("Material Filter", "window");
 
-        DrawRemoveButton(condition);
+            DrawRemoveButton(condition);
 
-        condition.targetedMaterial = (Material)EditorGUILayout.ObjectField(condition.targetedMaterial, typeof(Material), true);
+            condition.targetedMaterial = (Material)EditorGUILayout.ObjectField(condition.targetedMaterial, typeof(Material), true);
 
-        DrawExcludeToggle(condition);
+            DrawExcludeToggle(condition);
 
         GUILayout.EndVertical();
     }
 
-    void DrawDistanceFilter(DistanceFinder condition)
+    private void DrawDistanceFilter(DistanceFinder condition)
     {
 
         GUILayout.BeginVertical("Distance Filter", "window");
 
-        DrawRemoveButton(condition);
+            DrawRemoveButton(condition);
 
-        condition.sourceObject = (Transform)EditorGUILayout.ObjectField(condition.sourceObject, typeof(Transform), true);
+            condition.sourceObject = (Transform)EditorGUILayout.ObjectField(condition.sourceObject, typeof(Transform), true);
 
-        EditorGUILayout.BeginHorizontal();
-            condition.minRange = EditorGUILayout.FloatField("Min Distance:", condition.minRange, GUILayout.MaxWidth(200));
-            EditorGUILayout.MinMaxSlider(ref condition.minRange, ref condition.maxRange, 0f, 1000f);
-            condition.maxRange = EditorGUILayout.FloatField("Max Distance:", condition.maxRange, GUILayout.MaxWidth(200));
-        EditorGUILayout.EndHorizontal();
+            EditorGUILayout.BeginHorizontal();
+                condition.minRange = EditorGUILayout.FloatField("Min Distance:", condition.minRange, GUILayout.MaxWidth(200));
+                EditorGUILayout.MinMaxSlider(ref condition.minRange, ref condition.maxRange, 0f, 1000f);
+                condition.maxRange = EditorGUILayout.FloatField("Max Distance:", condition.maxRange, GUILayout.MaxWidth(200));
+            EditorGUILayout.EndHorizontal();
 
-        DrawExcludeToggle(condition);
+            DrawExcludeToggle(condition);
 
         GUILayout.EndVertical();
     }
 
-    private static void DrawExcludeToggle(ObjectFinderCondition condition)
+    #endregion Filters Drawing Methods
+
+    private void DrawExcludeToggle(ObjectFinderCondition condition)
     {
         
         condition.exclude = EditorGUILayout.Toggle(new GUIContent("Exclude", "Do you want to use this filter as exclusion ?"), condition.exclude);
     }
 
-    void DrawRemoveButton(ObjectFinderCondition condition)
+    private void DrawRemoveButton(ObjectFinderCondition condition)
     {
         Rect rect = EditorGUILayout.BeginVertical();
 
-        if (GUI.Button (new Rect (rect.width - 20, rect.position.y - 20, 20, 20), "X"))
-        {
-            conditions.Remove(condition);
-        }
+            if (GUI.Button (new Rect (rect.width - 20, rect.position.y - 20, 20, 20), "X"))
+            {
+                conditions.Remove(condition);
+            }
 
         EditorGUILayout.EndVertical();
     }
 
 #endregion Drawing Methods
+
+#region Tool Methods
     void Search()
     {
         results = Resources.FindObjectsOfTypeAll<GameObject>().ToList();
@@ -324,6 +328,9 @@ public class ObjectFinderEditorWindow : EditorWindow
         ActiveInHierarchyRestriction();
     }
 
+    /// <summary>
+    /// Select gameobjects depending on their location : current scene, opened scenes or in project
+    /// </summary>
     private void FilterByLocation()
     {
         switch(toolbarInt)
@@ -346,6 +353,9 @@ public class ObjectFinderEditorWindow : EditorWindow
         }
     }
 
+    /// <summary>
+    /// Keep only active gameobjects
+    /// </summary>
     private void ActiveInHierarchyRestriction()
     {
         List<GameObject> toDelete = new List<GameObject>();
@@ -355,6 +365,10 @@ public class ObjectFinderEditorWindow : EditorWindow
             results = results.Where(x => x.activeInHierarchy).ToList();
         }
     }
+
+    /// <summary>
+    /// Create a new condition according to the enumeration set by the user 
+    /// </summary>
     private void CreateNewCondition()
     {
         switch (conditionEnum)
@@ -383,12 +397,15 @@ public class ObjectFinderEditorWindow : EditorWindow
                 conditions.Add(new MaterialFinder());
                 break;
 
-            case ObjectFinderConditionsEnum.Script:
-                conditions.Add(new ScriptFinder());
+            case ObjectFinderConditionsEnum.Component:
+                conditions.Add(new ComponentFinder());
                 break;
         }
     }
 
+    /// <summary>
+    /// Populate a dictionnary with every components find in this project 
+    /// </summary>
     private void ReferenceScripts()
     {
             scriptsList.Clear();
@@ -407,7 +424,7 @@ public class ObjectFinderEditorWindow : EditorWindow
                     }
 
 
-                    if(types[j].IsSubclassOf(typeof(MonoBehaviour)))
+                    if(types[j].IsSubclassOf(typeof(Component)))
                     {
                         scriptsList.TryAdd(types[j].Name, types[j]);
                         Debug.Log($"Type {types[j].Name}, Type Name : {types[j].FullName}, Base Type : {types[j].BaseType}");                
@@ -415,5 +432,7 @@ public class ObjectFinderEditorWindow : EditorWindow
                 }
             }
     }
+
+#endregion Tool Methods
 }
 
