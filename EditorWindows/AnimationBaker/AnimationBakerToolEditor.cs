@@ -45,7 +45,7 @@ public class AnimationBakerToolEditor : EditorWindow
 #region UnityCallBacks
 
     //Just put your utility path here
-    [MenuItem("Tools/Louis/Animation Baker Tool")]
+    [MenuItem("Tools/Animation Baker Tool")]
     static void ShowWindow()
     {
         AnimationBakerToolEditor window = (AnimationBakerToolEditor)EditorWindow.GetWindow(typeof(AnimationBakerToolEditor));
@@ -150,32 +150,26 @@ public class AnimationBakerToolEditor : EditorWindow
         EditorGUILayout.Space(10);
 
         EditorGUILayout.PropertyField(OnStartRecordProperty, true);
-        EditorGUILayout.PropertyField(OnStartRecordProperty, true);
+        EditorGUILayout.PropertyField(OnStopRecordProperty, true);
 
         so.ApplyModifiedProperties();
     }
     
     private void Update()
     {
-        //Debug.Log("Recording = " + isRecording);
-
         if (isRecording)
         {
-
             m_Recorder.TakeSnapshot(Time.fixedDeltaTime);
             Repaint();
-            //Debug.Log("Recording...");
 
-
-            //SIMULATE PHYSICS IF IN EDITOR
             HandlePhysicSimulation();
-
         }
 
     }
 
 #endregion Unity Callbacks
 
+    // Simulate physic if in edit mode 
     private void HandlePhysicSimulation()
     {
         if (!EditorApplication.isPlaying)
@@ -252,6 +246,8 @@ public class AnimationBakerToolEditor : EditorWindow
         Debug.Log("Start Recording Animation..");
         
     }
+
+    // Save the animation and destroy the recorder
     void StopRecording()
     {
         isRecording = false;
@@ -265,6 +261,8 @@ public class AnimationBakerToolEditor : EditorWindow
 
         if(simulatePhysicsInEditMode)
         RestaureRigidbodiesPoses();
+
+        RestaurePhysic();
     }
     string GetCorrectPath(string path)
     {
@@ -276,6 +274,8 @@ public class AnimationBakerToolEditor : EditorWindow
 
         return savePath;
     }
+
+    // Save rigidbodies poses into a dictionary
     void SaveRigibodiesPoses()
     {
         rigidbodiesPoses.Clear();
@@ -295,6 +295,8 @@ public class AnimationBakerToolEditor : EditorWindow
         
         Debug.Log($"Saving poses of {bodies.Length} rigidbodies.");
     }
+
+    // Set back rigidbodies poses after physic simulation
     void RestaureRigidbodiesPoses()
     {
         foreach(Rigidbody rb in rigidbodiesPoses.Keys)
@@ -305,14 +307,18 @@ public class AnimationBakerToolEditor : EditorWindow
 
     void OnDestroy()
     {
-        //Ensure that the physic simulation mode is set back to fixed update ('cause it can do a lot of damages)
-        
-        #if UNITY_2022_1_OR_NEWER
-        Physics.simulationMode = SimulationMode.FixedUpdate;
-        #endif
+        //Ensure that the physic simulation mode is set back to fixed update ('cause it can do a lot of psychological damage)
+        RestaurePhysic();
+    }
 
-        #if !UNITY_2022_1_OR_NEWER
+    private static void RestaurePhysic()
+    {
+#if UNITY_2022_1_OR_NEWER
+        Physics.simulationMode = SimulationMode.FixedUpdate;
+#endif
+
+#if !UNITY_2022_1_OR_NEWER
         Physics.autoSimulation = true;
-        #endif
+#endif
     }
 }
