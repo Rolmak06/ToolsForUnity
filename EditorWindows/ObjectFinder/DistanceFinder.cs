@@ -5,8 +5,8 @@ using UnityEngine;
 public class DistanceFinder : ObjectFinderCondition
 {
     public Transform sourceObject;
-    public float minRange;
-    public float maxRange;
+    public float minRange = 0f;
+    public float maxRange = 10f;
     public override List<GameObject> Process(List<GameObject> objects)
     {
         if(sourceObject == null)

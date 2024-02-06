@@ -12,7 +12,11 @@ public abstract class GenericUnityObjectProvider<T> : ScriptableObject, ISearchW
         objectCallback = callback;
     }
 
-    public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
+    /// <summary>
+    /// Creates the Search Tree by finding desired elements and creating GUI content with its data 
+    /// </summary>
+
+    public virtual List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context)
     {
         List<SearchTreeEntry> searchList = new List<SearchTreeEntry>();
         SearchTreeGroupEntry group = new SearchTreeGroupEntry(new GUIContent("Objects"), 0);
@@ -20,8 +24,7 @@ public abstract class GenericUnityObjectProvider<T> : ScriptableObject, ISearchW
 
 
         foreach(T obj in Resources.FindObjectsOfTypeAll(typeof(T)) as T[])
-        {
-            //Sort by type : meshes, textures, materials, scripts, 
+        { 
             SearchTreeEntry entry = new SearchTreeEntry(new GUIContent(obj.ToString()))
             {
                 level = 1,
@@ -33,6 +36,10 @@ public abstract class GenericUnityObjectProvider<T> : ScriptableObject, ISearchW
 
         return searchList;
     }
+
+    /// <summary>
+    /// This callback is called when selecting and entry while the search window is open. This return the user data type linked to the entry when
+    /// </summary>
 
     public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context)
     {

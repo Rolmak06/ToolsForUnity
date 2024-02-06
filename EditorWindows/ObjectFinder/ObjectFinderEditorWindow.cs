@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NUnit.Framework.Constraints;
+using Sirenix.Utilities;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor.Rendering.BuiltIn;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,24 +15,29 @@ public class ObjectFinderEditorWindow : EditorWindow
     ObjectFinderConditionsEnum conditionEnum = ObjectFinderConditionsEnum.Name;
     public List<ObjectFinderCondition> conditions = new List<ObjectFinderCondition>();
     private Dictionary<string, Type> scriptsList = new Dictionary<string, Type>();
-    string[] scriptListContent = new string[]{"Empty"};
 
-    bool currentScene = true;
     bool onlyActiveGameObjects;
-    bool openedScenes;
-    bool inProject;
+
+
+    int toolbarInt;
+    string[] toolbarOptions = {"Current Scene", "All Opened Scenes", "Project", "All"};
 
     Vector2 objectScrollView;
-    bool needRefresh;
+    Vector2 filtersScrollView;
 
     public List<GameObject> results = new List<GameObject>();
     SerializedProperty resultsProperty;
     SerializedObject so;
+    readonly ShaderInfo[] shaderInfos = ShaderUtil.GetAllShaderInfo();
+
+
+
 
     [MenuItem("Tools/Louis/ObjectFinderPlus")]
     static void ShowWindow()
     {
         ObjectFinderEditorWindow window = (ObjectFinderEditorWindow)EditorWindow.GetWindow(typeof(ObjectFinderEditorWindow));
+        window.titleContent = new GUIContent("Object Finder", "I'll find any gameobject in your project !");
         window.Show();
     }
 
@@ -53,16 +61,22 @@ public class ObjectFinderEditorWindow : EditorWindow
 
         EditorGUILayout.Space(10);
 
-        if(conditions.Count > 0)
-        DrawConditions();
+        GUILayout.BeginVertical("FILTERS", "window", GUILayout.MaxHeight(600), GUILayout.MinHeight(350));
+            filtersScrollView = EditorGUILayout.BeginScrollView(filtersScrollView);
+                if(conditions.Count > 0)
+                DrawFilters();
+            EditorGUILayout.EndScrollView();
+        GUILayout.EndVertical();
 
-        EditorGUILayout.Space(10);
+        GUILayout.BeginVertical("SEARCH", "window", GUILayout.MaxHeight(600), GUILayout.MinHeight(350));
+            EditorGUILayout.Space(10);
 
-        DrawButtons();
+            DrawButtons();
 
-        EditorGUILayout.Space(10);
+            EditorGUILayout.Space(10);
 
-        DrawResultList();
+            DrawResultList();
+        GUILayout.EndVertical();
 
         if(EditorGUI.EndChangeCheck())
         {
@@ -84,45 +98,39 @@ public class ObjectFinderEditorWindow : EditorWindow
     private void DrawButtons()
     {
         EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Search GameObjects"))
+            {
+                Search();
+            }
 
-        if (GUILayout.Button("Search GameObjects"))
-        {
-            Search();
-        }
-
-        if (GUILayout.Button("X - Clear"))
-        {
-            results.Clear();
-        }
+            if (GUILayout.Button("X - Clear"))
+            {
+                results.Clear();
+            }
         EditorGUILayout.EndHorizontal();
     }
 
     private void DrawConditionsManagement()
     {
-        EditorGUILayout.BeginHorizontal();
+        toolbarInt = GUILayout.Toolbar(toolbarInt, toolbarOptions);
 
+        onlyActiveGameObjects = EditorGUILayout.Toggle("Active Objects only ?", onlyActiveGameObjects);
+        
+        EditorGUILayout.Space(5);
+
+        EditorGUILayout.BeginHorizontal();
             conditionEnum = (ObjectFinderConditionsEnum)EditorGUILayout.EnumPopup(conditionEnum);
 
-            if(GUILayout.Button("+ Add Condition"))
+            if(GUILayout.Button("+ Add Filter"))
             {
                 CreateNewCondition();
             }
 
-            EditorGUILayout.LabelField("Conditions : " + conditions.Count.ToString());
-
-        EditorGUILayout.EndHorizontal();
-
-        EditorGUILayout.Space(5);
-
-        GUILayout.BeginHorizontal();
-            currentScene = EditorGUILayout.Toggle("Current Scene ?", currentScene);
-            openedScenes = EditorGUILayout.Toggle("All opened scenes ?", openedScenes);
-            onlyActiveGameObjects = EditorGUILayout.Toggle("Only active gameObjects?", onlyActiveGameObjects);
-            inProject = EditorGUILayout.Toggle("Project assets ?", inProject);
+            EditorGUILayout.LabelField("Filters : " + conditions.Count.ToString());
         EditorGUILayout.EndHorizontal();
     }
 
-    private void DrawConditions()
+    private void DrawFilters()
     {
         try
         {
@@ -130,37 +138,37 @@ public class ObjectFinderEditorWindow : EditorWindow
             {
                 if(conditions[i] is NameFinder)
                 {
-                    DrawNameCondition(conditions[i] as NameFinder);
+                    DrawNameFilter(conditions[i] as NameFinder);
                 }
 
                 if(conditions[i] is TagFinder)
                 {
-                    DrawTagCondition(conditions[i] as TagFinder);
+                    DrawTagFilter(conditions[i] as TagFinder);
                 }
 
                 if(conditions[i] is LayerFinder)
                 {
-                    DrawLayerCondition(conditions[i] as LayerFinder);
+                    DrawLayerFilter(conditions[i] as LayerFinder);
                 }
 
                 if(conditions[i] is ScriptFinder)
                 {
-                    DrawScriptCondition(conditions[i] as ScriptFinder);
+                    DrawScriptFilter(conditions[i] as ScriptFinder);
                 }
 
                 if(conditions[i] is ShaderFinder)
                 {
-                    DrawShaderCondition(conditions[i] as ShaderFinder);
+                    DrawShaderFilter(conditions[i] as ShaderFinder);
                 }
 
                 if(conditions[i] is MaterialFinder)
                 {
-                    DrawMaterialCondition(conditions[i] as MaterialFinder);
+                    DrawMaterialFilter(conditions[i] as MaterialFinder);
                 }
 
                 if(conditions[i] is DistanceFinder)
                 {
-                    DrawDistanceCondition(conditions[i] as DistanceFinder);
+                    DrawDistanceFilter(conditions[i] as DistanceFinder);
                 }
             }
         }
@@ -172,7 +180,7 @@ public class ObjectFinderEditorWindow : EditorWindow
         
     }
     
-    void DrawNameCondition(NameFinder condition)
+    void DrawNameFilter(NameFinder condition)
     {
         GUILayout.BeginVertical("Name Filter", "window");
         DrawRemoveButton(condition);
@@ -193,7 +201,7 @@ public class ObjectFinderEditorWindow : EditorWindow
         GUILayout.EndVertical();
     }
 
-    void DrawTagCondition(TagFinder condition)
+    void DrawTagFilter(TagFinder condition)
     {
         GUILayout.BeginVertical("Tag Filter", "window");
         DrawRemoveButton(condition);
@@ -205,7 +213,7 @@ public class ObjectFinderEditorWindow : EditorWindow
         GUILayout.EndVertical();
     }
 
-    void DrawLayerCondition(LayerFinder condition)
+    void DrawLayerFilter(LayerFinder condition)
     {
         GUILayout.BeginVertical("Layer Filter", "window");
         DrawRemoveButton(condition);
@@ -217,52 +225,67 @@ public class ObjectFinderEditorWindow : EditorWindow
         GUILayout.EndVertical();
     }
 
-    void DrawScriptCondition(ScriptFinder condition)
+    void DrawScriptFilter(ScriptFinder condition)
     {
         GUILayout.BeginVertical("Script Filter", "window");
 
         DrawRemoveButton(condition);
 
-        if(GUILayout.Button(condition.targetedType == null? "Selected Type" : condition.targetedType.Name, EditorStyles.popup, GUILayout.MinWidth(200)))
-        {
-            SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)), new ObjectFinderComponentProvider(scriptsList, (x) => condition.targetedType = x));
-        }
+        //condition.targetedType = (Component)EditorGUILayout.ObjectField(condition.targetedType, typeof(Component), true);
+
+        GUILayout.BeginHorizontal();
+            GUILayout.Label("Script :", GUILayout.MaxWidth(100));
+            if(GUILayout.Button(condition.targetedType == null? "Selected Type" : condition.targetedType.GetType().Name, EditorStyles.popup, GUILayout.MinWidth(200)))
+            {
+                SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)), new ObjectFinderComponentProvider(scriptsList, (x) => condition.targetedType = x));
+            }
+        GUILayout.EndHorizontal();
 
         DrawExcludeToggle(condition);
 
         GUILayout.EndVertical();
     }
 
-    void DrawShaderCondition(ShaderFinder condition)
+    void DrawShaderFilter(ShaderFinder condition)
     {
         GUILayout.BeginVertical("Shader Filter", "window");
 
         DrawRemoveButton(condition);
 
+        condition.targetedShader = (Shader)EditorGUILayout.ObjectField(condition.targetedShader, typeof(Shader), true);
+
         DrawExcludeToggle(condition);
 
         GUILayout.EndVertical();
     }
 
-    void DrawMaterialCondition(MaterialFinder condition)
+    void DrawMaterialFilter(MaterialFinder condition)
     {
         GUILayout.BeginVertical("Material Filter", "window");
 
         DrawRemoveButton(condition);
 
+        condition.targetedMaterial = (Material)EditorGUILayout.ObjectField(condition.targetedMaterial, typeof(Material), true);
+
         DrawExcludeToggle(condition);
 
         GUILayout.EndVertical();
     }
 
-    void DrawDistanceCondition(DistanceFinder condition)
+    void DrawDistanceFilter(DistanceFinder condition)
     {
 
         GUILayout.BeginVertical("Distance Filter", "window");
 
         DrawRemoveButton(condition);
 
-        EditorGUILayout.MinMaxSlider(ref condition.minRange, ref condition.maxRange, 0f, Mathf.Infinity);
+        condition.sourceObject = (Transform)EditorGUILayout.ObjectField(condition.sourceObject, typeof(Transform), true);
+
+        EditorGUILayout.BeginHorizontal();
+            condition.minRange = EditorGUILayout.FloatField("Min Distance:", condition.minRange, GUILayout.MaxWidth(200));
+            EditorGUILayout.MinMaxSlider(ref condition.minRange, ref condition.maxRange, 0f, 1000f);
+            condition.maxRange = EditorGUILayout.FloatField("Max Distance:", condition.maxRange, GUILayout.MaxWidth(200));
+        EditorGUILayout.EndHorizontal();
 
         DrawExcludeToggle(condition);
 
@@ -296,87 +319,42 @@ public class ObjectFinderEditorWindow : EditorWindow
         {
             results = conditions[i].Process(results);
         }
-
-        RestrictToActiveObject();
-        RestrictToActiveScene();
-        RestrictToPrefab();
+        
+        FilterByLocation();
+        ActiveInHierarchyRestriction();
     }
 
-    private void RestrictToActiveObject()
+    private void FilterByLocation()
+    {
+        switch(toolbarInt)
+        {
+            case 0: //Current Scene
+                results = results.Where(x => x.scene == SceneManager.GetActiveScene() && !AssetDatabase.Contains(x)).ToList();
+            break;
+
+            case 1: //All scenes
+                results = results.Where(x => !AssetDatabase.Contains(x)).ToList();
+            break;
+
+            case 2: //Project
+                results = results.Where(x => AssetDatabase.Contains(x)).ToList();
+            break;
+
+            case 3: //Everywhere
+                //Do nothing, we keep all !
+            break;
+        }
+    }
+
+    private void ActiveInHierarchyRestriction()
     {
         List<GameObject> toDelete = new List<GameObject>();
         
         if (onlyActiveGameObjects)
         {
-            foreach (GameObject go in results)
-            {
-                if (!go.activeInHierarchy)
-                {
-                    toDelete.Add(go);
-                }
-            }
-
-            foreach(GameObject go in toDelete)
-            {
-                results.Remove(go);
-            }
+            results = results.Where(x => x.activeInHierarchy).ToList();
         }
     }
-    private void RestrictToActiveScene()
-    {
-        if(!openedScenes)
-        {
-            List<GameObject> toDelete = new List<GameObject>();
-            
-            foreach (GameObject obj in results)
-            {
-                if (obj.scene != SceneManager.GetActiveScene())
-                {
-                    toDelete.Add(obj);
-                }
-            }
-            
-            foreach(GameObject obj in toDelete)
-            {
-                results.Remove(obj);
-            }
-        }
-    }
-    private void RestrictToPrefab()
-    {
-        List<GameObject> toDelete = new List<GameObject>(results);
-
-        if(inProject && !openedScenes && !currentScene)
-        {   
-            
-            foreach (GameObject obj in results)
-            {
-                if (AssetDatabase.Contains(obj))
-                {
-                    toDelete.Remove(obj);
-                }
-            }
-        }
-
-        if(!inProject)
-        {
-            toDelete.Clear();
-
-            foreach (GameObject obj in results)
-            {
-                if (AssetDatabase.Contains(obj))
-                {
-                    toDelete.Add(obj);
-                }
-            }
-        }
-
-        foreach(GameObject obj in toDelete)
-        {
-            results.Remove(obj);
-        }
-    }
-
     private void CreateNewCondition()
     {
         switch (conditionEnum)
@@ -436,8 +414,6 @@ public class ObjectFinderEditorWindow : EditorWindow
                     }
                 }
             }
-
-            scriptListContent = scriptsList.Keys.ToArray();
     }
 }
 
