@@ -6,7 +6,15 @@ namespace ObjectFinderTool
 {
     public class ComponentFilter : BaseFilter
     {
+        
         public Type targetedType;
+
+        //Constructor
+        public ComponentFilter(Type targetedType = null)
+        {
+            this.targetedType = targetedType;
+        }
+
         public override List<GameObject> Process(List<GameObject> objects)
         {
             List<GameObject> tempObj = new List<GameObject>(objects);

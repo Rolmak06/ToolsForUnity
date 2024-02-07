@@ -7,12 +7,19 @@ namespace ObjectFinderTool
     public class MaterialFilter : BaseFilter
     {
         public Material targetedMaterial;
+
+        //Constructor
+        public MaterialFilter(Material targetedMaterial = null)
+        {
+            this.targetedMaterial = targetedMaterial;
+        }
+
         public override List<GameObject> Process(List<GameObject> objects)
         {
             if(targetedMaterial == null)
             {
                 Debug.LogError("[OBJECT FINDER] Material condition is null");
-                return null;
+                return objects;
             }
 
             List<GameObject> renderers = new List<GameObject>();

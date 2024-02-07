@@ -1,18 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace ObjectFinderTool
 {
 
     public class ObjectFinderEditorWindow : EditorWindow
     {
-        FilterEnum conditionEnum = FilterEnum.Name;
+        FilterEnum filterEnum = FilterEnum.Name;
         public List<BaseFilter> conditions = new List<BaseFilter>();
         
 
@@ -30,11 +28,10 @@ namespace ObjectFinderTool
         private Dictionary<string, Type> scriptsList = new Dictionary<string, Type>();
 
 
-        [MenuItem("Tools/Object Finder")]
+        [MenuItem("Tools/Object Finder Window")]
         static void ShowWindow()
         {
-            ObjectFinderEditorWindow window = (ObjectFinderEditorWindow)EditorWindow.GetWindow(typeof(ObjectFinderEditorWindow));
-            window.titleContent = new GUIContent("Object Finder", "I'll find any gameobject in your project !");
+            ObjectFinderEditorWindow window = GetWindow<ObjectFinderEditorWindow>();
             window.Show();
         }
 
@@ -50,22 +47,20 @@ namespace ObjectFinderTool
 
         void OnGUI()
         {   
-            EditorGUI.BeginChangeCheck();
-
             so.Update();
 
             DrawConditionsManagement();
 
             EditorGUILayout.Space(10);
 
-            GUILayout.BeginVertical("FILTERS", "window", GUILayout.MaxHeight(600), GUILayout.MinHeight(350));
+            GUILayout.BeginVertical("FILTERS", "window", GUILayout.MaxHeight(600), GUILayout.MinHeight(300));
                 filtersScrollView = EditorGUILayout.BeginScrollView(filtersScrollView);
                     if(conditions.Count > 0)
                     DrawFilters();
                 EditorGUILayout.EndScrollView();
             GUILayout.EndVertical();
 
-            GUILayout.BeginVertical("SEARCH", "window", GUILayout.MaxHeight(600), GUILayout.MinHeight(350));
+            GUILayout.BeginVertical("SEARCH", "window", GUILayout.MaxHeight(600), GUILayout.MinHeight(300));
                 EditorGUILayout.Space(10);
 
                 DrawButtons();
@@ -75,13 +70,9 @@ namespace ObjectFinderTool
                 DrawResultList();
             GUILayout.EndVertical();
 
-            if(EditorGUI.EndChangeCheck())
-            {
-            }
-
         }
 
-        #region Drawing Methods
+#region Drawing Methods
         private void DrawResultList()
         {
             if (results.Count > 0)
@@ -99,7 +90,7 @@ namespace ObjectFinderTool
             EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("Search GameObjects"))
                 {
-                    Search();
+                    results = ObjectFinderEditor.Search(conditions.ToArray(), onlyActiveGameObjects, toolbarInt);
                 }
 
                 if (GUILayout.Button("X - Clear"))
@@ -120,7 +111,7 @@ namespace ObjectFinderTool
             EditorGUILayout.Space(5);
 
             EditorGUILayout.BeginHorizontal();
-                conditionEnum = (FilterEnum)EditorGUILayout.EnumPopup(conditionEnum);
+                filterEnum = (FilterEnum)EditorGUILayout.EnumPopup(filterEnum);
 
                 if(GUILayout.Button("+ Add Filter"))
                 {
@@ -183,7 +174,7 @@ namespace ObjectFinderTool
             
         }
         
-        #region Filters  Methods
+#region Filters  Methods
         private void DrawNameFilter(NameFilter condition)
         {
             GUILayout.BeginVertical("Name Filter", "window");
@@ -267,7 +258,7 @@ namespace ObjectFinderTool
 
                 DrawRemoveButton(condition);
 
-                condition.targetedMaterial = (Material)EditorGUILayout.ObjectField(condition.targetedMaterial, typeof(Material), true);
+                condition.targetedMaterial = (Material)EditorGUILayout.ObjectField("Targeted Material", condition.targetedMaterial, typeof(Material), true);
 
                 DrawExcludeToggle(condition);
 
@@ -281,7 +272,7 @@ namespace ObjectFinderTool
 
                 DrawRemoveButton(condition);
 
-                condition.sourceObject = (Transform)EditorGUILayout.ObjectField(condition.sourceObject, typeof(Transform), true);
+                condition.sourceObject = (Transform)EditorGUILayout.ObjectField("Source Transform", condition.sourceObject, typeof(Transform), true);
 
                 EditorGUILayout.BeginHorizontal();
                     condition.minRange = EditorGUILayout.FloatField("Min Distance:", condition.minRange, GUILayout.MaxWidth(200));
@@ -294,7 +285,7 @@ namespace ObjectFinderTool
             GUILayout.EndVertical();
         }
 
-        #endregion Filters Drawing Methods
+#endregion Filters Drawing Methods
 
         private void DrawExcludeToggle(BaseFilter condition)
         {
@@ -314,66 +305,14 @@ namespace ObjectFinderTool
             EditorGUILayout.EndVertical();
         }
 
-    #endregion Drawing Methods
+#endregion Drawing Methods
 
-    #region Tool Methods
-        void Search()
-        {
-            results = Resources.FindObjectsOfTypeAll<GameObject>().ToList();
+#region Editor Window Methods
 
-            for (int i = 0; i < conditions.Count; i++)
-            {
-                results = conditions[i].Process(results);
-            }
-            
-            FilterByLocation();
-            ActiveInHierarchyRestriction();
-        }
-
-        /// <summary>
-        /// Select gameobjects depending on their location : current scene, opened scenes or in project
-        /// </summary>
-        private void FilterByLocation()
-        {
-            switch(toolbarInt)
-            {
-                case 0: //Current Scene
-                    results = results.Where(x => x.scene == SceneManager.GetActiveScene() && !AssetDatabase.Contains(x)).ToList();
-                break;
-
-                case 1: //All scenes
-                    results = results.Where(x => !AssetDatabase.Contains(x)).ToList();
-                break;
-
-                case 2: //Project
-                    results = results.Where(x => AssetDatabase.Contains(x)).ToList();
-                break;
-
-                case 3: //Everywhere
-                    //Do nothing, we keep all !
-                break;
-            }
-        }
-
-        /// <summary>
-        /// Keep only active gameobjects
-        /// </summary>
-        private void ActiveInHierarchyRestriction()
-        {
-            List<GameObject> toDelete = new List<GameObject>();
-            
-            if (onlyActiveGameObjects)
-            {
-                results = results.Where(x => x.activeInHierarchy).ToList();
-            }
-        }
-
-        /// <summary>
         /// Create a new condition according to the enumeration set by the user 
-        /// </summary>
         private void CreateNewCondition()
         {
-            switch (conditionEnum)
+            switch (filterEnum)
             {
                 case FilterEnum.Name:
                     conditions.Add(new NameFilter());
@@ -405,37 +344,37 @@ namespace ObjectFinderTool
             }
         }
 
-        /// <summary>
+
         /// Populate a dictionnary with every components find in this project 
-        /// </summary>
         private void ReferenceScripts()
         {
-                scriptsList.Clear();
+            scriptsList.Clear();
 
-                Assembly[] referencedAssemblies = System.AppDomain.CurrentDomain.GetAssemblies();
+            Assembly[] referencedAssemblies = System.AppDomain.CurrentDomain.GetAssemblies();
 
-                for(int i = 0; i < referencedAssemblies.Length; ++i)
-                {
-                    Type[] types = referencedAssemblies[i].GetTypes();
+            for(int i = 0; i < referencedAssemblies.Length; ++i)
+            {
+                Type[] types = referencedAssemblies[i].GetTypes();
 
-                    for (int j = 0; j < types.Length; j++)
-                    {   
-                        if(types[j].Name.Contains("CameraFilterPack_"))
-                        {
-                            continue;
-                        }
+                for (int j = 0; j < types.Length; j++)
+                {   
+                    if(types[j].Name.Contains("CameraFilterPack_"))
+                    {
+                        continue;
+                    }
 
 
-                        if(types[j].IsSubclassOf(typeof(Component)))
-                        {
-                            scriptsList.TryAdd(types[j].Name, types[j]);
-                            Debug.Log($"Type {types[j].Name}, Type Name : {types[j].FullName}, Base Type : {types[j].BaseType}");                
-                        }
+                    if(types[j].IsSubclassOf(typeof(Component)))
+                    {
+                        scriptsList.TryAdd(types[j].Name, types[j]);
+                        Debug.Log($"Type {types[j].Name}, Type Name : {types[j].FullName}, Base Type : {types[j].BaseType}");                
                     }
                 }
+            }
         }
 
-    #endregion Tool Methods
+#endregion Editor Window Methods
+
     }
 }
 

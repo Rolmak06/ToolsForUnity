@@ -9,12 +9,21 @@ namespace ObjectFinderTool
         public string targetedName;
         public bool exact;
         public bool caseSensitive;
+
+        //Constructors
+        public NameFilter(string targetedName = null, bool exact = false, bool caseSensitive = false)
+        {
+            this.targetedName = targetedName;
+            this.exact = exact;
+            this.caseSensitive = caseSensitive;
+        }
+
         public override List<GameObject> Process(List<GameObject> objects)
         {
             if(targetedName == string.Empty || targetedName == "")
             {
                 Debug.LogError("[OBJECT FINDER] Name condition is null");
-                return null;
+                return objects;
             }
 
             if(exact)

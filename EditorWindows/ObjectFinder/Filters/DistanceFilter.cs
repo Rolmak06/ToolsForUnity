@@ -9,12 +9,20 @@ namespace ObjectFinderTool
         public Transform sourceObject;
         public float minRange = 0f;
         public float maxRange = 10f;
+
+        //Constructor
+        public DistanceFilter(Transform sourceObject = null, float minRange = 0f, float maxRange = 100f)
+        {
+            this.sourceObject = sourceObject;
+            this.minRange = minRange;
+            this.maxRange = maxRange;
+        }
         public override List<GameObject> Process(List<GameObject> objects)
         {
             if(sourceObject == null)
             {
                 Debug.LogError("[OBJECT FINDER] Source Object is null");
-                return null;
+                return objects;
             }
 
             objects = exclude? objects.Where(obj => Vector3.Distance(sourceObject.position, obj.transform.position) < minRange && Vector3.Distance(sourceObject.position, obj.transform.position) > maxRange).ToList():

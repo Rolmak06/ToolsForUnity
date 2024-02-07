@@ -8,12 +8,18 @@ namespace ObjectFinderTool
     public class ShaderFilter : BaseFilter
     {
         public Shader targetedShader;
+
+        //Constructor 
+        public ShaderFilter(Shader targetedShader = null)
+        {
+            this.targetedShader = targetedShader;
+        }
         public override List<GameObject> Process(List<GameObject> objects)
         {
             if(targetedShader == null)
             {
                 Debug.LogError("[OBJECT FINDER] Shader condition is null");
-                return null;
+                return objects;
             }
 
             List<GameObject> renderers = new List<GameObject>();
