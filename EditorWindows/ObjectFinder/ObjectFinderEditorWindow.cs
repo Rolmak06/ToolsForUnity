@@ -32,6 +32,7 @@ namespace ObjectFinderTool
         static void ShowWindow()
         {
             ObjectFinderEditorWindow window = GetWindow<ObjectFinderEditorWindow>();
+            window.titleContent = new GUIContent("Object Finder Window", "With this, you'll be able to find any gameobject in your project !");
             window.Show();
         }
 
@@ -42,14 +43,14 @@ namespace ObjectFinderTool
             resultsProperty = so.FindProperty("results");
 
             //Reference scripts from project
-            ReferenceScripts();
+            ReferenceComponents();
         }
 
         void OnGUI()
         {   
             so.Update();
 
-            DrawConditionsManagement();
+            DrawSearchParameters();
 
             EditorGUILayout.Space(10);
 
@@ -59,6 +60,8 @@ namespace ObjectFinderTool
                     DrawFilters();
                 EditorGUILayout.EndScrollView();
             GUILayout.EndVertical();
+
+            EditorGUILayout.Space(10);
 
             GUILayout.BeginVertical("SEARCH", "window", GUILayout.MaxHeight(600), GUILayout.MinHeight(300));
                 EditorGUILayout.Space(10);
@@ -102,7 +105,7 @@ namespace ObjectFinderTool
 
 
         /// Base Search Paramaters GUI 
-        private void DrawConditionsManagement()
+        private void DrawSearchParameters()
         {
             toolbarInt = GUILayout.Toolbar(toolbarInt, toolbarOptions);
 
@@ -115,7 +118,7 @@ namespace ObjectFinderTool
 
                 if(GUILayout.Button("+ Add Filter"))
                 {
-                    CreateNewCondition();
+                    CreateNewFilter();
                 }
 
                 EditorGUILayout.LabelField("Filters : " + conditions.Count.ToString());
@@ -310,7 +313,7 @@ namespace ObjectFinderTool
 #region Editor Window Methods
 
         /// Create a new condition according to the enumeration set by the user 
-        private void CreateNewCondition()
+        private void CreateNewFilter()
         {
             switch (filterEnum)
             {
@@ -346,7 +349,7 @@ namespace ObjectFinderTool
 
 
         /// Populate a dictionnary with every components find in this project 
-        private void ReferenceScripts()
+        private void ReferenceComponents()
         {
             scriptsList.Clear();
 

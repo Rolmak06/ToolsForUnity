@@ -6,6 +6,9 @@ using UnityEngine.SceneManagement;
 
 namespace ObjectFinderTool
 {
+    /// <summary>
+    /// This class allows you to find a list of gameobjects anywhere in your project using search filters and parameters
+    /// </summary>
     public class ObjectFinderEditor
     {
 
@@ -18,6 +21,8 @@ namespace ObjectFinderTool
             /// <returns>Results as a list of GameObjects</returns>
             public static List<GameObject> Search(BaseFilter[] filters, bool onlyActive, int selection)
             {
+                Debug.Log($"Starts a Search : only Active = {onlyActive}; Selection = {selection}");
+
                 List<GameObject> searchResult = Resources.FindObjectsOfTypeAll<GameObject>().ToList();
 
                 for (int i = 0; i < filters.Length; i++)
@@ -25,8 +30,10 @@ namespace ObjectFinderTool
                     searchResult = filters[i].Process(searchResult);
                 }
 
-                FilterByLocation(searchResult, selection);
-                ActiveInHierarchyRestriction(searchResult, onlyActive);
+
+                searchResult = ActiveInHierarchyRestriction(searchResult, onlyActive);
+                searchResult = FilterByLocation(searchResult, selection);
+                
 
                 return searchResult;
             }
@@ -39,7 +46,6 @@ namespace ObjectFinderTool
             /// <returns>Filtered object list </returns>
             public static List<GameObject> FilterByLocation(List<GameObject> results, int selection)
             {
-                if(results == null || results.Count < 1)
                 switch(selection)
                 {
                     case 0: //Current Scene
@@ -63,7 +69,7 @@ namespace ObjectFinderTool
             }
 
             /// <summary>
-            /// Keep only active gameobjects
+            /// Keep only active gameobjects. Be aware, project assets do not appear as active.
             /// </summary>
             /// <param name="results"></param>
             /// <param name="onlyActive"></param>
