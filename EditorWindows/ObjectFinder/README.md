@@ -9,10 +9,10 @@ The Object Finder is the perfect tool to find lost GameObjects in your scenes bu
 - Tag
 - Name
 - Layer
-- Distance (from another object)
+- Distance (from a source transform)
 - Material
 - Shader
-- Component (attached to the target)
+- Component
 
 ## Editor Window Screen
 ![alt text](https://i.ibb.co/QFT6YsY/Tool.png)
