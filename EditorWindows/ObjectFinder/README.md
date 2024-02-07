@@ -2,6 +2,8 @@
 
 The Object Finder is the perfect tool to find lost GameObjects in your scenes but also in your project. You can choose to search in : current scene, opened scenes, project or everywhere ! 
 
+-> Access it via "Tools/Object Finder"
+
 ## Filters 
 
 - Tag
