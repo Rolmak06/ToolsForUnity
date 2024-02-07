@@ -186,10 +186,10 @@ namespace ObjectFinderTool
             EditorGUILayout.BeginHorizontal();
                 bool contains;
 
-                contains = GUILayout.Toggle(!condition.exact, "Contains", "Button");
-                condition.exact = GUILayout.Toggle(!contains,"Exact", "Button");
+                contains = GUILayout.Toggle(!condition.exact, new GUIContent("Contains", "Will match every gameObjects with a name that contains the search"), "Button");
+                condition.exact = GUILayout.Toggle(!contains, new GUIContent("Exact", "Will match only gameObjects with a name that match exactly the search"), "Button");
                 
-                condition.caseSensitive = GUILayout.Toggle( condition.caseSensitive, "Case Sensitive", "Button");
+                condition.caseSensitive = GUILayout.Toggle( condition.caseSensitive, new GUIContent("Case Sensitive", "Does casing is taking into account to find a match ?"), "Button");
             EditorGUILayout.EndHorizontal();
             
             condition.targetedName = EditorGUILayout.TextField("Name", condition.targetedName);
@@ -248,7 +248,7 @@ namespace ObjectFinderTool
 
                 DrawRemoveButton(condition);
 
-                condition.targetedShader = (Shader)EditorGUILayout.ObjectField(condition.targetedShader, typeof(Shader), true);
+                condition.targetedShader = (Shader)EditorGUILayout.ObjectField("Targeted Shader", condition.targetedShader, typeof(Shader), true);
 
                 DrawExcludeToggle(condition);
 
