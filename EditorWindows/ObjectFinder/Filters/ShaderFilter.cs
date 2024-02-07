@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace ObjectFinderTool
 {
+    /// <summary>
+    /// Filters a GameObjects List and keep only those who carry the specified shader (MeshRenderer and SkinnedMeshRenderer)
+    /// </summary>
     public class ShaderFilter : BaseFilter
     {
         public Shader targetedShader;
@@ -22,13 +25,14 @@ namespace ObjectFinderTool
                 return objects;
             }
 
+            // Get all Renderers of the entry list
+
             List<GameObject> renderers = new List<GameObject>();
-            List<GameObject> skinnedRenderers = new List<GameObject>();
             List<GameObject> objShader = new List<GameObject>();
 
-            renderers = objects.Where(obj => obj.GetComponent<MeshRenderer>()).ToList();
-            skinnedRenderers = objects.Where(obj => obj.GetComponent<SkinnedMeshRenderer>()).ToList();
+            renderers = objects.Where(obj => obj.GetComponent<Renderer>()).ToList();
 
+            //Search for the targeted shader in the list
 
             foreach(GameObject renderer in renderers)
             {
@@ -44,25 +48,9 @@ namespace ObjectFinderTool
                 }
             }
 
-            foreach(GameObject skinnedRenderer in skinnedRenderers)
-            {
-                foreach(Material material in skinnedRenderer.GetComponent<SkinnedMeshRenderer>().sharedMaterials)
-                {
-                    if(material == null){continue;}
-                    if(material.shader == null){continue;}
-
-                    //ternary operator for inclusion or exclusion of the search method. If exclude is true, collect only objects that doesn't fall in the method's parameters.
-                    if(exclude? material.shader != targetedShader : material.shader == targetedShader)
-                    {
-                        objShader.Add(skinnedRenderer);
-                    }
-                }   
-            }
 
             objects.Clear();
             objects = objShader;
-
-            Debug.Log(objShader.Count + " objects in the scene with this shader : " + targetedShader);
 
             return objects;
         }

@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace ObjectFinderTool
 {
+    /// <summary>
+    /// Filters a GameObjects List and keep only those with the specified component
+    /// </summary>
     public class ComponentFilter : BaseFilter
     {
         

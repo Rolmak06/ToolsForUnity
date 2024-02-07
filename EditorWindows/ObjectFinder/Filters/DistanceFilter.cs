@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace ObjectFinderTool
 {
+    /// <summary>
+    /// Filters a GameObjects List and keep only those who fits in the specified distance of the specified Transform
+    /// </summary>
     public class DistanceFilter : BaseFilter
     {
         public Transform sourceObject;

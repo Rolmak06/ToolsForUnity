@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace ObjectFinderTool
 {
+    /// <summary>
+    /// Filters a GameObjects List and keep only those who carry the specified material (MeshRenderer and SkinnedMeshRenderer)
+    /// </summary>
     public class MaterialFilter : BaseFilter
     {
         public Material targetedMaterial;
@@ -22,17 +25,18 @@ namespace ObjectFinderTool
                 return objects;
             }
 
+            // Gets all Renderers of the entry list
+
             List<GameObject> renderers = new List<GameObject>();
-            List<GameObject> skinnedRenderers = new List<GameObject>();
             List<GameObject> objMaterial = new List<GameObject>();
 
-            renderers = objects.Where(obj => obj.GetComponent<MeshRenderer>()).ToList();
-            skinnedRenderers = objects.Where(obj => obj.GetComponent<SkinnedMeshRenderer>()).ToList();
+            renderers = objects.Where(obj => obj.GetComponent<Renderer>()).ToList();
 
+            //Search for the targeted material in the list
 
             foreach(GameObject renderer in renderers)
             {
-                foreach(Material material in renderer.GetComponent<MeshRenderer>().sharedMaterials)
+                foreach(Material material in renderer.GetComponent<Renderer>().sharedMaterials)
                 {
                     if(material == null){continue;}
 
@@ -43,24 +47,9 @@ namespace ObjectFinderTool
                 }
             }
 
-            foreach(GameObject skinnedRenderer in skinnedRenderers)
-            {
-                foreach(Material material in skinnedRenderer.GetComponent<SkinnedMeshRenderer>().sharedMaterials)
-                {
-                    if(material == null){continue;}
-                
-                    //ternary operator for inclusion or exclusion of the search method. If exclude is true, collect only objects that doesn't fall in the method's parameters.
-                    if(exclude? material != targetedMaterial : material == targetedMaterial)
-                    {
-                        objMaterial.Add(skinnedRenderer);
-                    }
-                }   
-            }
 
             objects.Clear();
             objects = objMaterial;
-
-            Debug.Log(objMaterial.Count + " objects in the scene with this material : " + targetedMaterial);
 
             return objects;
         }
