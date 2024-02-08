@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -7,8 +6,8 @@ public class AssetBundlesManager
 {
     public class AssetBundleName
     {
-        public string assetBundlesName;
-        public int selectedName;
+        public string Name;
+        public int NameIndex;
     }
     public static void CreateNewBundle()
     {

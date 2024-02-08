@@ -3,20 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using static AssetBundlesManager;
 
 public class AssetBundlesBuilderWindow : EditorWindow
 {
-    
+    //Store asset bundles names and use of a custom class to display bundles names with a popup and select them with an int 
+    private string[] existingAssetBundlesNames;
+    private List<AssetBundlesManager.AssetBundleName> assetBundlesNames = new List<AssetBundlesManager.AssetBundleName>(); 
+    private List<string> assetBundlesToBuild;
 
-    public string[] assetBundlesNamesToBuild;
-    public List<AssetBundleName> assetBundlesNames = new List<AssetBundleName>();
-    string outputPath;
-    BuildAssetBundleOptions bundleOptions = BuildAssetBundleOptions.ChunkBasedCompression;
-    BuildTarget targetPlatform;
+    //Store options into a list to then define the build option by combining them
+    private List<BuildAssetBundleOptions> bundleOptionsList = new List<BuildAssetBundleOptions>();
+    private BuildAssetBundleOptions bundleOptions = BuildAssetBundleOptions.ChunkBasedCompression;
 
+    private BuildTarget targetPlatform;
+    private string outputPath;
 
-    
+    // Editor variables
+    private Vector2 optionsScroll;
+
 
 
     [MenuItem("Asset Bundles/Asset Bundles Builder")]
@@ -29,15 +33,9 @@ public class AssetBundlesBuilderWindow : EditorWindow
 
     void OnEnable()
     {
-        // assign default path and target platform
+        // assign default path and target platform then retreive all existing bundles
         outputPath = Application.streamingAssetsPath + "/AssetBundles/";
         targetPlatform = EditorUserBuildSettings.activeBuildTarget;
-
-        // create a scriptable out of this window to cast properties 
-      
-
-        //retrieve properties
-     
         GetBundlesNames();
     }
 
@@ -47,24 +45,17 @@ public class AssetBundlesBuilderWindow : EditorWindow
 
         DrawBuildOptions();
 
-        //Draw the targeted bundles names list
         DrawBundleSelection();
 
-
-        if (GUILayout.Button("Build All Asset Bundles"))
-        {
-            if (EditorUtility.DisplayDialog("Build Asset Bundles", "Are you sure you want to build all bundles in this project ?", "Yes", "Cancel"))
-            {
-                AssetBundlesBuilder.BuildBundles(outputPath, targetPlatform);
-            }
-
-        }
+        DrawBuildAllBundles();
     }
 
-    //Get names from bundle manager
+
+
+    //Get bundles names from bundle manager
     void GetBundlesNames()
     {
-        assetBundlesNamesToBuild = AssetBundlesManager.FindExistingBundles().Keys.ToArray();
+        existingAssetBundlesNames = AssetBundlesManager.FindExistingBundles().Keys.ToArray();
     }
 
     //Draw an output path selection
@@ -82,11 +73,43 @@ public class AssetBundlesBuilderWindow : EditorWindow
     private void DrawBuildOptions()
     {
         
-        bundleOptions = (BuildAssetBundleOptions)EditorGUILayout.EnumPopup("Build Bundles Options", bundleOptions);
-        targetPlatform = (BuildTarget)EditorGUILayout.EnumPopup("Build Target Platform", targetPlatform);
+        GUILayout.BeginVertical("Bundle Options", "window", GUILayout.MaxHeight(300));
+
+            if(GUILayout.Button("+ Add Options"))
+            {
+                    bundleOptionsList.Add(new BuildAssetBundleOptions());
+            }
+
+            optionsScroll = EditorGUILayout.BeginScrollView(optionsScroll);
+            
+                try // try catch to avoid any error because we're modifying the list we're cycling through
+                {   
+                    //Allows multiple options 
+                    for (int i = 0; i < bundleOptionsList.Count; i++)
+                    {
+                        GUILayout.BeginVertical("Option " + (i+1), "window");
+                            EditorGUILayout.BeginHorizontal();
+                                bundleOptionsList[i] = (BuildAssetBundleOptions)EditorGUILayout.EnumPopup(bundleOptionsList[i]);
+                                if(GUILayout.Button("X", GUILayout.MaxWidth(50)))
+                                {
+                                    bundleOptionsList.Remove(bundleOptionsList[i]);
+                                }
+                            EditorGUILayout.EndHorizontal();
+                        GUILayout.EndVertical();
+                    }
+                }
+                
+                catch{}
+
+            EditorGUILayout.EndScrollView();
+
+
+            targetPlatform = (BuildTarget)EditorGUILayout.EnumPopup("Build Target Platform", targetPlatform);
+        GUILayout.EndVertical();
     }
 
-    void DrawBundleSelection()
+    //Draw the targeted bundles names list + Button to build selected bundles
+    private void DrawBundleSelection()
     {
         EditorGUILayout.Space(10);
 
@@ -97,16 +120,18 @@ public class AssetBundlesBuilderWindow : EditorWindow
 
             if(GUILayout.Button("+ Add Bundle to Selection"))
             {
-                assetBundlesNames.Add(new AssetBundleName());
+                assetBundlesNames.Add(new AssetBundlesManager.AssetBundleName());
             }
+
 
             try
             {
                 for (int i = 0; i < assetBundlesNames.Count; i++)
                 {
-                    GUILayout.BeginVertical("Bundle" + (i+1), "window");
+                    GUILayout.BeginVertical("Bundle " + (i+1), "window");
                         EditorGUILayout.BeginHorizontal();
-                            assetBundlesNames[i].selectedName = EditorGUILayout.Popup(assetBundlesNames[i].selectedName, assetBundlesNamesToBuild);
+
+                            assetBundlesNames[i].NameIndex = EditorGUILayout.Popup(assetBundlesNames[i].NameIndex, existingAssetBundlesNames);
                             if(GUILayout.Button("X", GUILayout.MaxWidth(50)))
                             {
                                 assetBundlesNames.Remove(assetBundlesNames[i]);
@@ -125,10 +150,13 @@ public class AssetBundlesBuilderWindow : EditorWindow
             if(GUILayout.Button("Build Selected Asset Bundles"))
             {
                 if(EditorUtility.DisplayDialog("Build Asset Bundles By Name", "Are you sure you want to build selected bundles (by names)", "Yes", "Cancel"))
-                {  
-                    AssetBundlesBuilder.BuildAssetBundlesByName(assetBundlesNamesToBuild.ToArray(), outputPath, targetPlatform);
-                }
+            {
+                CreateBundleSelectionList();
+                CreateBundleOptions();
+
+                AssetBundlesBuilder.BuildAssetBundlesByName(assetBundlesToBuild.ToArray(), outputPath, targetPlatform, bundleOptions);
             }
+        }
             
             GUI.enabled = true;
 
@@ -137,4 +165,52 @@ public class AssetBundlesBuilderWindow : EditorWindow
     }
 
     
+
+    // Draw button to build all bundles
+    private void DrawBuildAllBundles()
+    {
+        if (GUILayout.Button("Build All Asset Bundles"))
+        {
+            if (EditorUtility.DisplayDialog("Build Asset Bundles", "Are you sure you want to build all bundles in this project ?", "Yes", "Cancel"))
+            {
+                CreateBundleOptions();
+                AssetBundlesBuilder.BuildBundles(outputPath, targetPlatform, bundleOptions);
+            }
+        }
+    }
+
+    private void CreateBundleSelectionList()
+    {
+        assetBundlesToBuild.Clear();
+
+        foreach (AssetBundlesManager.AssetBundleName assetBundleName in assetBundlesNames)
+        {
+            assetBundlesToBuild.Add(assetBundleName.Name);
+        }
+    }
+    private void CreateBundleOptions()
+    {
+        if(bundleOptionsList.Count < 1)
+        {
+            bundleOptions = BuildAssetBundleOptions.None;
+        }
+
+        else
+        {
+            for (int i = 0; i < bundleOptionsList.Count; i++)
+            {
+                if(i == 0)
+                {
+                    bundleOptions = bundleOptionsList[i];
+                }
+
+                else
+                {
+                    bundleOptions |= bundleOptionsList[i];
+                }
+            }
+        }
+
+        
+    }
 }

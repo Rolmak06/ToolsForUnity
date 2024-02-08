@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -14,7 +13,7 @@ public class AssetBundlesBuilder
     /// </summary>
     /// <param name="assetBundleNames">String array representing bundles names</param>
     /// <param name="outputPath">Folder destination for bundles</param>
-    public static void BuildAssetBundlesByName(string[] assetBundleNames, string outputPath, BuildTarget targetPlatform) 
+    public static void BuildAssetBundlesByName(string[] assetBundleNames, string outputPath, BuildTarget targetPlatform, BuildAssetBundleOptions options) 
    {
        // Argument validation
        if (assetBundleNames == null || assetBundleNames.Length == 0 || assetBundleNames.Contains(""))
@@ -36,11 +35,11 @@ public class AssetBundlesBuilder
             };
 
             builds.Add(build);
-           Debug.Log("assetBundle to build:" + build.assetBundleName);
        }
 
         CheckPath(outputPath);
-       BuildPipeline.BuildAssetBundles(outputPath, builds.ToArray(), BuildAssetBundleOptions.ChunkBasedCompression, targetPlatform);
+        Debug.Log($"Building Assets bundles {assetBundleNames}  with options : {options}  at {outputPath} for {targetPlatform}");
+       BuildPipeline.BuildAssetBundles(outputPath, builds.ToArray(), options, targetPlatform);
    }
 
     /// <summary>
@@ -48,10 +47,12 @@ public class AssetBundlesBuilder
     /// </summary>
     /// <param name="outputPath"></param>
     /// <param name="targetPlatform"></param>
-   public static void BuildBundles(string outputPath, BuildTarget targetPlatform) 
+   public static void BuildBundles(string outputPath, BuildTarget targetPlatform, BuildAssetBundleOptions options) 
    {
         CheckPath(outputPath);
-        BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.ChunkBasedCompression, targetPlatform);
+        Debug.Log($"Building Assets bundles with options : {options}  at {outputPath} for {targetPlatform}");
+        BuildPipeline.BuildAssetBundles(outputPath, options, targetPlatform);
+       
     }
 
     private static void CheckPath(string outputPath)
