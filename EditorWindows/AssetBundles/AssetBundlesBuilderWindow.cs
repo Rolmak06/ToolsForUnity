@@ -149,11 +149,11 @@ public class AssetBundlesBuilderWindow : EditorWindow
             //Draw build bundles buttons : by names / all
             if(GUILayout.Button("Build Selected Asset Bundles"))
             {
-                if(EditorUtility.DisplayDialog("Build Asset Bundles By Name", "Are you sure you want to build selected bundles (by names)", "Yes", "Cancel"))
-            {
                 CreateBundleSelectionList();
                 CreateBundleOptions();
-
+                
+                if(EditorUtility.DisplayDialog("Build Asset Bundles By Name", $"Are you sure you want to build {assetBundlesToBuild.Count} selected bundles. Target Platform : {targetPlatform}, Build Options : {bundleOptions}", "Yes", "Cancel"))
+            {
                 AssetBundlesBuilder.BuildAssetBundlesByName(assetBundlesToBuild.ToArray(), outputPath, targetPlatform, bundleOptions);
             }
         }
@@ -171,9 +171,10 @@ public class AssetBundlesBuilderWindow : EditorWindow
     {
         if (GUILayout.Button("Build All Asset Bundles"))
         {
-            if (EditorUtility.DisplayDialog("Build Asset Bundles", "Are you sure you want to build all bundles in this project ?", "Yes", "Cancel"))
+            CreateBundleOptions();
+
+            if (EditorUtility.DisplayDialog("Build Asset Bundles", $"Are you sure you want to build all bundles in this project ? Target Platform : {targetPlatform}, Build Options : {bundleOptions}", "Yes", "Cancel"))
             {
-                CreateBundleOptions();
                 AssetBundlesBuilder.BuildBundles(outputPath, targetPlatform, bundleOptions);
             }
         }
