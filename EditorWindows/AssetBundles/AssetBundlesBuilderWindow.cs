@@ -3,15 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using static AssetBundlesManager;
 
 public class AssetBundlesBuilderWindow : EditorWindow
 {
-    [Serializable]
-    public class AssetBundleName
-    {
-        public string assetBundlesName;
-        public int selectedName;
-    }
+    
 
     public string[] assetBundlesNamesToBuild;
     public List<AssetBundleName> assetBundlesNames = new List<AssetBundleName>();
@@ -108,7 +104,7 @@ public class AssetBundlesBuilderWindow : EditorWindow
             {
                 for (int i = 0; i < assetBundlesNames.Count; i++)
                 {
-                    GUILayout.BeginVertical("Bundle" + i, "window");
+                    GUILayout.BeginVertical("Bundle" + (i+1), "window");
                         EditorGUILayout.BeginHorizontal();
                             assetBundlesNames[i].selectedName = EditorGUILayout.Popup(assetBundlesNames[i].selectedName, assetBundlesNamesToBuild);
                             if(GUILayout.Button("X", GUILayout.MaxWidth(50)))

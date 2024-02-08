@@ -5,6 +5,11 @@ using UnityEngine;
 
 public class AssetBundlesManager 
 {
+    public class AssetBundleName
+    {
+        public string assetBundlesName;
+        public int selectedName;
+    }
     public static void CreateNewBundle()
     {
         
