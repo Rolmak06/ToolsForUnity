@@ -5,6 +5,7 @@ public class RaycastForce : MonoBehaviour
     [SerializeField] float strengh;
     [SerializeField] ForceMode forceMode;
 
+    [ContextMenu("Raycast Physic Shot")]
     public void Raycast()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
