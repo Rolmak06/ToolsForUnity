@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/// <summary>
+/// Creates an explosion with this transform for origin. It can explodes every bodies or just the one selected
+/// </summary>
 public class ExplosionForce : MonoBehaviour
 {
     [SerializeField, Tooltip("Radius of the explosion, represented by a red wired sphere")] float explosionRadius = 2f;
