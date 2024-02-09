@@ -9,7 +9,7 @@ public class AssetBundlesBuilderWindow : EditorWindow
     //Store asset bundles names and use of a custom class to display bundles names with a popup and select them with an int 
     private string[] existingAssetBundlesNames;
     private List<AssetBundlesManager.AssetBundleName> assetBundlesNames = new List<AssetBundlesManager.AssetBundleName>(); 
-    private List<string> assetBundlesToBuild;
+    private List<string> assetBundlesToBuild = new List<string>();
 
     //Store options into a list to then define the build option by combining them
     private List<BuildAssetBundleOptions> bundleOptionsList = new List<BuildAssetBundleOptions>();
@@ -37,6 +37,7 @@ public class AssetBundlesBuilderWindow : EditorWindow
         outputPath = Application.streamingAssetsPath + "/AssetBundles/";
         targetPlatform = EditorUserBuildSettings.activeBuildTarget;
         GetBundlesNames();
+        bundleOptionsList.Add(BuildAssetBundleOptions.ChunkBasedCompression);
     }
 
     void OnGUI()
@@ -151,7 +152,7 @@ public class AssetBundlesBuilderWindow : EditorWindow
             {
                 CreateBundleSelectionList();
                 CreateBundleOptions();
-                
+
                 if(EditorUtility.DisplayDialog("Build Asset Bundles By Name", $"Are you sure you want to build {assetBundlesToBuild.Count} selected bundles. Target Platform : {targetPlatform}, Build Options : {bundleOptions}", "Yes", "Cancel"))
             {
                 AssetBundlesBuilder.BuildAssetBundlesByName(assetBundlesToBuild.ToArray(), outputPath, targetPlatform, bundleOptions);
@@ -186,6 +187,7 @@ public class AssetBundlesBuilderWindow : EditorWindow
 
         foreach (AssetBundlesManager.AssetBundleName assetBundleName in assetBundlesNames)
         {
+            assetBundleName.Name = existingAssetBundlesNames[assetBundleName.NameIndex];
             assetBundlesToBuild.Add(assetBundleName.Name);
         }
     }
