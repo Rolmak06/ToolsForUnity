@@ -14,7 +14,7 @@ This Editor Window is the perfect tool the find gameobjects using multiple filte
 Seems futile at first but when you're working on big, I mean, way big scenes, it can helps a lot !
 
 ### [Asset Bundles Tools](EditorWindows/AssetBundles)
-A set of tools the create, build and manage Assets Bundles inside of Unity. You can build all your bundles or only the one you want for faster build time (that's mainly why I've created this tool). You can see which assets are in which bundles, add assets and remove assets from them.
+A set of tools to create, build and manage Assets Bundles inside of Unity. You can build all your bundles or only the one you want for faster build time (that's mainly why I've created this tool). You can see which assets are in which bundles, add assets and remove assets from them.
 
 There's currently 2 windows : Manager (inspect and manage bundles) & Builder (Build your bundles for a specific platform with specifics options at a defined location).
 
