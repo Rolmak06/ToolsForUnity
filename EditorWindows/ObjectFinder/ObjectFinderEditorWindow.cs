@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
@@ -16,7 +17,7 @@ namespace ObjectFinderTool
 
         bool onlyActiveGameObjects;
         int toolbarInt;
-        string[] toolbarOptions = {"Current Scene", "All Opened Scenes", "Project", "All"};
+        string[] toolbarOptions = {"Current Scene", "All Opened Scenes", "Project", "Child of selected", "All"};
 
         Vector2 objectScrollView;
         Vector2 filtersScrollView;
@@ -73,6 +74,10 @@ namespace ObjectFinderTool
                 DrawResultList();
             GUILayout.EndVertical();
 
+            if(GUILayout.Button("Select results"))
+            {
+                Selection.objects = results.ToArray();
+            }
         }
 
 #region Drawing Methods
@@ -166,6 +171,11 @@ namespace ObjectFinderTool
                     if(conditions[i] is DistanceFilter)
                     {
                         DrawDistanceFilter(conditions[i] as DistanceFilter);
+                    }
+
+                    if (conditions[i] is PropertyFilter)
+                    {
+                        DrawPropertyFilter(conditions[i] as PropertyFilter);
                     }
                 }
             }
@@ -288,7 +298,63 @@ namespace ObjectFinderTool
             GUILayout.EndVertical();
         }
 
-#endregion Filters Drawing Methods
+        private void DrawPropertyFilter(PropertyFilter condition)
+        {
+            GUILayout.BeginVertical("Property Filter", "window");
+
+            DrawRemoveButton(condition);
+
+            // --- Component Type Selection (Using Search Window) ---
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Component:", GUILayout.MaxWidth(100));
+
+            string buttonLabel = condition.componentType == null ? "Select Component" : condition.componentType.Name;
+            if (GUILayout.Button(buttonLabel, EditorStyles.popup, GUILayout.MinWidth(200)))
+            {
+                // Open your existing search window
+                SearchWindow.Open(
+                    new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)),
+                    new ObjectFinderComponentProvider(scriptsList, (selectedType) => {
+                        condition.componentType = selectedType;
+                        condition.targetedProperty = null; // Reset property on type change
+                        condition.targetedValue = null;
+                    })
+                );
+            }
+            GUILayout.EndHorizontal();
+
+            // --- Property and Value Drawing (only if type is selected) ---
+            if (condition.componentType != null)
+            {
+                // 1. Property Selection
+                var props = condition.componentType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                List<PropertyInfo> readableProps = new List<PropertyInfo>();
+                foreach (var p in props)
+                {
+                    if (p.CanRead && p.GetIndexParameters().Length == 0)
+                        readableProps.Add(p);
+                }
+
+                int currentPropIndex = Mathf.Max(0, readableProps.FindIndex(p => p.Name == condition.targetedProperty));
+                string[] propNames = readableProps.ConvertAll(p => p.Name).ToArray();
+
+                currentPropIndex = EditorGUILayout.Popup("Property", currentPropIndex, propNames);
+                condition.targetedProperty = readableProps[currentPropIndex].Name;
+
+                // 2. Value Input Based on Property Type
+                var selectedProp = readableProps[currentPropIndex];
+                condition.targetedValue = DrawValueField("Target Value", condition.targetedValue, selectedProp.PropertyType);
+            }
+
+            DrawExcludeToggle(condition);
+
+            GUILayout.EndVertical();
+        }
+
+
+
+
+        #endregion Filters Drawing Methods
 
         private void DrawExcludeToggle(BaseFilter condition)
         {
@@ -344,6 +410,10 @@ namespace ObjectFinderTool
                 case FilterEnum.Component:
                     conditions.Add(new ComponentFilter());
                     break;
+
+                case FilterEnum.Property:
+                    conditions.Add(new PropertyFilter());
+                    break;
             }
         }
 
@@ -376,7 +446,91 @@ namespace ObjectFinderTool
             }
         }
 
-#endregion Editor Window Methods
+        private List<Type> GetAllComponentTypes()
+        {
+            var componentTypes = new List<Type>();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (var assembly in assemblies)
+            {
+                Type[] types;
+                try
+                {
+                    types = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException e)
+                {
+                    types = e.Types.Where(t => t != null).ToArray();
+                }
+
+                foreach (var type in types)
+                {
+                    if (typeof(Component).IsAssignableFrom(type) &&
+                        !type.IsAbstract &&
+                        type.IsPublic &&
+                        type.IsClass)
+                    {
+                        componentTypes.Add(type);
+                    }
+                }
+            }
+
+            componentTypes.Sort((a, b) => a.Name.CompareTo(b.Name));
+            return componentTypes;
+        }
+
+        private object DrawValueField(string label, object currentValue, Type type)
+        {
+            if (type == typeof(int))
+            {
+                return EditorGUILayout.IntField(label, currentValue is int i ? i : 0);
+            }
+            else if (type == typeof(float))
+            {
+                return EditorGUILayout.FloatField(label, currentValue is float f ? f : 0f);
+            }
+            else if (type == typeof(bool))
+            {
+                return EditorGUILayout.Toggle(label, currentValue is bool b && b);
+            }
+            else if (type == typeof(string))
+            {
+                return EditorGUILayout.TextField(label, currentValue as string ?? "");
+            }
+            else if (type.IsEnum)
+            {
+                // Make sure the enum is cast to the correct type
+                if (currentValue == null || currentValue.GetType() != type)
+                {
+                    currentValue = Enum.GetValues(type).GetValue(0);
+                }
+
+                return EditorGUILayout.EnumPopup(label, (Enum)Enum.ToObject(type, currentValue));
+            }
+
+            else if (type == typeof(Vector2))
+            {
+                return EditorGUILayout.Vector2Field(label, currentValue is Vector2 v ? v : Vector2.zero);
+            }
+            else if (type == typeof(Vector3))
+            {
+                return EditorGUILayout.Vector3Field(label, currentValue is Vector3 v ? v : Vector3.zero);
+            }
+            else if (type == typeof(Color))
+            {
+                return EditorGUILayout.ColorField(label, currentValue is Color c ? c : Color.white);
+            }
+            else if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                return EditorGUILayout.ObjectField(label, currentValue as UnityEngine.Object, type, true);
+            }
+
+            EditorGUILayout.LabelField(label, $"Unsupported type: {type.Name}");
+            return currentValue;
+        }
+
+
+        #endregion Editor Window Methods
 
     }
 }
