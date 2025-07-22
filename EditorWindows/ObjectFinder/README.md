@@ -13,6 +13,7 @@ The Object Finder is the perfect tool to find lost GameObjects in your scenes bu
 - Material
 - Shader
 - Component
+- Properties
 
 ## Editor Window Screen
 ![alt text](https://i.ibb.co/QFT6YsY/Tool.png)
